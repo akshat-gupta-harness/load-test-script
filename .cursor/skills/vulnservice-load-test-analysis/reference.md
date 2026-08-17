@@ -1,6 +1,6 @@
 # Load-test analysis reference (vulnservice QA)
 
-Detailed playbook for the `vulnservice-load-test-analysis` skill. Example outputs: `docs/2026-08-14-package-info-cached-load-test.md`, `docs/2026-08-17-package-info-cached-load-test.md`. Related: `docs/read-optimisation.md`.
+Detailed playbook for the `vulnservice-load-test-analysis` skill. Example outputs live under `docs/load-test-runs/`.
 
 ---
 
@@ -10,7 +10,7 @@ Trigger when the user asks to:
 
 - summarize / RCA a load-test run
 - check bottleneck after a DB/app change
-- write `docs/YYYY-MM-DD-package-info-cached-load-test.md`
+- create `docs/load-test-runs/<run-id>/analysis.md` with dashboard screenshots
 - compare to a prior dated run
 
 Do **not** invent metrics — pull k6 + GCP (+ optional Prometheus/kubectl).
@@ -146,10 +146,20 @@ Always state:
 
 ---
 
-## Step 7 — Write the dated summary
+## Step 7 — Create the run artifact
 
-**Path:** `docs/YYYY-MM-DD-package-info-cached-load-test.md`  
-(If multiple runs same day with different hardware, suffix e.g. `-6vcpu` — or overwrite only if user asks.)
+**Folder:** `docs/load-test-runs/<run-id>/`
+
+Use `YYYY-MM-DD-package-info-cached[-variant]` for `<run-id>`; add a meaningful variant such as `-6vcpu` for multiple same-day runs. Never overwrite another run.
+
+```text
+docs/load-test-runs/<run-id>/
+├── analysis.md
+└── screenshots/
+    ├── k6-load-test.png
+    ├── gcp-cloud-sql.png
+    └── vulnservice-metrics.png  # when authenticated capture is available
+```
 
 ### Required sections (match prior docs)
 
@@ -166,7 +176,36 @@ Tone: concise, tables over prose, no secrets (`HARNESS_API_KEY` in `run.sh` — 
 
 ---
 
-## Step 8 — Optional follow-ups
+## Step 8 — Capture dashboard evidence
+
+Use an **absolute UTC range** covering the run plus 2–5 minutes on either side. Do not save a `now-15m`/`now-30m` screenshot: it becomes irreproducible immediately.
+
+For local Grafana:
+
+```bash
+.cursor/skills/vulnservice-load-test-analysis/scripts/capture-grafana.sh \
+  docs/load-test-runs/<run-id> <from_epoch_ms> <to_epoch_ms>
+```
+
+The script uses installed Chrome/Chromium in headless mode and captures:
+
+- k6: `/d/k6-load-test/k6-load-test`
+- app + Cloud SQL: `/d/gcp-vulnservice/gcp-vulnservice-2b-cloud-sql`
+
+Open both PNGs and verify that panels rendered, the time range is UTC, and the data covers the intended run. Add a `Dashboard snapshots` section to `analysis.md`:
+
+```markdown
+## Dashboard snapshots
+
+![k6 load-test signals](screenshots/k6-load-test.png)
+![vulnservice and Cloud SQL signals](screenshots/gcp-cloud-sql.png)
+```
+
+Harness Observability requires the user’s authenticated browser session. If headless capture redirects to login, ask the user to capture it manually with the same absolute `from`/`to` values and save it as `screenshots/vulnservice-metrics.png`; do not store cookies or tokens.
+
+---
+
+## Step 9 — Optional follow-ups
 
 | Ask | Action |
 |-----|--------|
@@ -194,6 +233,7 @@ Tone: concise, tables over prose, no secrets (`HARNESS_API_KEY` in `run.sh` — 
 - [ ] Query Insights top queries ranked
 - [ ] Pod CPU/mem + pool config
 - [ ] Bottleneck named with evidence
-- [ ] Dated doc written in the standard shape
+- [ ] Run folder contains `analysis.md` and verified screenshots
+- [ ] Screenshots use an absolute UTC run window
 - [ ] No credentials in docs or chat
 

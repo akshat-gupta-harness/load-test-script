@@ -5,7 +5,7 @@ Playbook for analyzing a `package_info/cached` k6 run and writing a dated summar
 **Cursor skill:** `.cursor/skills/vulnservice-load-test-analysis/` (agent loads `SKILL.md`; this file mirrors the skill’s `reference.md`).
 
 **Repo:** `load-test-script`  
-**Example outputs:** `docs/2026-08-14-package-info-cached-load-test.md`, `docs/2026-08-17-package-info-cached-load-test.md`  
+**Example outputs:** `docs/load-test-runs/*/analysis.md`  
 **Related:** `docs/read-optimisation.md`
 
 ---
@@ -16,7 +16,7 @@ Trigger when the user asks to:
 
 - summarize / RCA a load-test run
 - check bottleneck after a DB/app change
-- write `docs/YYYY-MM-DD-package-info-cached-load-test.md`
+- create a run folder containing the analysis and dashboard screenshots
 - compare to a prior dated run
 
 Do **not** invent metrics — pull k6 + GCP (+ optional Prometheus/kubectl).
@@ -152,10 +152,20 @@ Always state:
 
 ---
 
-## Step 7 — Write the dated summary
+## Step 7 — Create the run artifact
 
-**Path:** `docs/YYYY-MM-DD-package-info-cached-load-test.md`  
-(If multiple runs same day with different hardware, suffix e.g. `-6vcpu` — or overwrite only if user asks.)
+**Folder:** `docs/load-test-runs/<run-id>/`
+
+Use `YYYY-MM-DD-package-info-cached[-variant]` for `<run-id>`. Put the report at `analysis.md`; never overwrite another run.
+
+```text
+docs/load-test-runs/<run-id>/
+├── analysis.md
+└── screenshots/
+    ├── k6-load-test.png
+    ├── gcp-cloud-sql.png
+    └── vulnservice-metrics.png  # when authenticated capture is available
+```
 
 ### Required sections (match prior docs)
 
@@ -172,7 +182,29 @@ Tone: concise, tables over prose, no secrets (`HARNESS_API_KEY` in `run.sh` — 
 
 ---
 
-## Step 8 — Optional follow-ups
+## Step 8 — Capture dashboard evidence
+
+Use an absolute UTC range covering the run plus 2–5 minutes on either side. Never archive a `now-*` screenshot.
+
+```bash
+.cursor/skills/vulnservice-load-test-analysis/scripts/capture-grafana.sh \
+  docs/load-test-runs/<run-id> <from_epoch_ms> <to_epoch_ms>
+```
+
+Open the resulting PNGs and verify the panels and run window rendered. Embed them in `analysis.md`:
+
+```markdown
+## Dashboard snapshots
+
+![k6 load-test signals](screenshots/k6-load-test.png)
+![vulnservice and Cloud SQL signals](screenshots/gcp-cloud-sql.png)
+```
+
+Harness Observability needs an authenticated browser session. If headless capture redirects to login, capture it manually using the same absolute range and save it as `screenshots/vulnservice-metrics.png`; never store browser cookies or tokens.
+
+---
+
+## Step 9 — Optional follow-ups
 
 | Ask | Action |
 |-----|--------|
@@ -200,6 +232,7 @@ Tone: concise, tables over prose, no secrets (`HARNESS_API_KEY` in `run.sh` — 
 - [ ] Query Insights top queries ranked
 - [ ] Pod CPU/mem + pool config
 - [ ] Bottleneck named with evidence
-- [ ] Dated doc written in the standard shape
+- [ ] Run folder contains `analysis.md` and verified screenshots
+- [ ] Screenshots use an absolute UTC run window
 - [ ] No credentials in docs or chat
 
