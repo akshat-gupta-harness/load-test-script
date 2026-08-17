@@ -54,11 +54,21 @@ docker-compose down
 # optional: colima stop
 ```
 
-## Ramp profile
+## Ramp profiles
 
-`1 → 2 → 5 → 10 → 20 → 50 → 100 → 500 → 1000 → 5000` RPS, each with a short ramp + hold (30s–1m; 2m ramps only at the highest commented rungs). `maxVUs: 5000`.
+Pick with `PROFILE=…` (default `full`):
 
-Sized for ~400ms latency: concurrency ≈ RPS × 0.4 (Little’s law). If p95 climbs under load, watch `dropped_iterations` and `vus`.
+| Profile | RPS path | Batch |
+|---------|----------|-------|
+| `full` | 200 → 300 → 500 → … → 3000 | 1 (override with `BATCH_SIZE`) |
+| `focus` | 300 → 500 → 750 → 1000 | 1 |
+| `batch100` | slow 10 → 25 → 50 → … → 500 (longer holds) | **100** |
+
+```bash
+PROFILE=batch100 ./run.sh
+```
+
+`maxVUs: 10000`. Sized for ~400ms latency: concurrency ≈ RPS × 0.4 (Little’s law). If p95 climbs under load, watch `dropped_iterations` and `vus`.
 
 ## Abort thresholds
 

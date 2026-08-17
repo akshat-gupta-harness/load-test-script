@@ -6,6 +6,7 @@ import { Counter, Rate } from 'k6/metrics';
 // --- Tunables (edit here) ---
 // No-flags + warm cache clears 300 RPS easily — skip fine steps below that and
 // climb to 5k. PROFILE=focus stays denser around 300–1000 for the next knee.
+// PROFILE=batch100: 100 PURLs/POST, slow climb that stops at 500.
 const PROFILES = {
   full: {
     stages: [
@@ -37,6 +38,29 @@ const PROFILES = {
       { target: 1000, duration: '45s' },
     ],
   },
+  batch100: {
+    batchSize: 100,
+    stages: [
+      { target: 10, duration: '30s' },
+      { target: 10, duration: '45s' },
+      { target: 25, duration: '30s' },
+      { target: 25, duration: '45s' },
+      { target: 50, duration: '30s' },
+      { target: 50, duration: '1m' },
+      { target: 100, duration: '45s' },
+      { target: 100, duration: '1m' },
+      { target: 150, duration: '45s' },
+      { target: 150, duration: '1m' },
+      { target: 200, duration: '45s' },
+      { target: 200, duration: '1m' },
+      { target: 300, duration: '45s' },
+      { target: 300, duration: '1m' },
+      { target: 400, duration: '45s' },
+      { target: 400, duration: '1m' },
+      { target: 500, duration: '45s' },
+      { target: 500, duration: '2m' },
+    ],
+  },
 };
 
 const PROFILE = __ENV.PROFILE || 'full';
@@ -44,13 +68,19 @@ if (!PROFILES[PROFILE]) {
   throw new Error(`unknown PROFILE '${PROFILE}' (expected: ${Object.keys(PROFILES).join(', ')})`);
 }
 
+const profile = PROFILES[PROFILE];
+const BATCH_SIZE = Math.max(
+  1,
+  Number(__ENV.BATCH_SIZE || profile.batchSize || 1) || 1
+);
+
 const LOAD = {
   startRate: 1,
   timeUnit: '1s',
   // skip_cache p95 can hit multi-seconds past 1k — need VU headroom.
   preAllocatedVUs: 2000,
   maxVUs: 10000,
-  ...PROFILES[PROFILE],
+  stages: profile.stages,
 };
 
 const THRESHOLDS = {
@@ -130,7 +160,7 @@ export const options = {
 // to actually differ from its baseline.
 export function setup() {
   console.log(
-    `profile=${PROFILE} path=${PACKAGE_INFO_PATH} reverse_purls=${REVERSE_PURLS}`
+    `profile=${PROFILE} batch_size=${BATCH_SIZE} path=${PACKAGE_INFO_PATH} reverse_purls=${REVERSE_PURLS}`
   );
 }
 
@@ -141,13 +171,16 @@ export default function () {
   }
 
   const base = (__ENV.BASE_URL || DEFAULT_BASE).replace(/\/$/, '');
-  const i = exec.scenario.iterationInTest % dataset.length;
-  const index = REVERSE_PURLS ? dataset.length - 1 - i : i;
-  const purl = dataset[index];
+  const start = (exec.scenario.iterationInTest * BATCH_SIZE) % dataset.length;
+  const purls = new Array(BATCH_SIZE);
+  for (let j = 0; j < BATCH_SIZE; j++) {
+    const i = (start + j) % dataset.length;
+    purls[j] = REVERSE_PURLS ? dataset[dataset.length - 1 - i] : dataset[i];
+  }
 
   const res = http.post(
     `${base}${PACKAGE_INFO_PATH}`,
-    JSON.stringify({ purls: [purl] }),
+    JSON.stringify({ purls }),
     {
       headers: {
         'Content-Type': 'application/json',
