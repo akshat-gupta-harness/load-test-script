@@ -4,35 +4,53 @@ import { SharedArray } from 'k6/data';
 import { Counter, Rate } from 'k6/metrics';
 
 // --- Tunables (edit here) ---
+// No-flags + warm cache clears 300 RPS easily — skip fine steps below that and
+// climb to 5k. PROFILE=focus stays denser around 300–1000 for the next knee.
+const PROFILES = {
+  full: {
+    stages: [
+      { target: 200, duration: '30s' },
+      { target: 200, duration: '30s' },
+      { target: 300, duration: '30s' },
+      { target: 300, duration: '30s' },
+      { target: 500, duration: '30s' },
+      { target: 500, duration: '45s' },
+      { target: 1000, duration: '45s' },
+      { target: 1000, duration: '1m' },
+      { target: 1500, duration: '45s' },
+      { target: 1500, duration: '1m' },
+      { target: 2000, duration: '45s' },
+      { target: 2000, duration: '1m' },
+      { target: 3000, duration: '45s' },
+      { target: 3000, duration: '1m' },
+    ],
+  },
+  focus: {
+    stages: [
+      { target: 300, duration: '30s' },
+      { target: 300, duration: '30s' },
+      { target: 500, duration: '30s' },
+      { target: 500, duration: '45s' },
+      { target: 750, duration: '30s' },
+      { target: 750, duration: '45s' },
+      { target: 1000, duration: '45s' },
+      { target: 1000, duration: '45s' },
+    ],
+  },
+};
+
+const PROFILE = __ENV.PROFILE || 'full';
+if (!PROFILES[PROFILE]) {
+  throw new Error(`unknown PROFILE '${PROFILE}' (expected: ${Object.keys(PROFILES).join(', ')})`);
+}
+
 const LOAD = {
   startRate: 1,
   timeUnit: '1s',
-  // ~400ms latency → VUs ≈ RPS × 0.4 (plus headroom if p95 climbs)
-  preAllocatedVUs: 50,
-  maxVUs: 5000,
-  // Ramp + hold ladder: 1 → 2 → 5 → 10 → 20 → 50 → 100 → 500 → 1000 → 5000 RPS
-  stages: [
-    { target: 1, duration: '30s' },
-    { target: 1, duration: '1m' },
-    { target: 2, duration: '30s' },
-    { target: 2, duration: '1m' },
-    { target: 5, duration: '1m' },
-    { target: 5, duration: '1m' },
-    { target: 10, duration: '1m' },
-    { target: 10, duration: '1m' },
-    { target: 20, duration: '1m' },
-    { target: 20, duration: '1m' },
-    { target: 50, duration: '1m' },
-    { target: 50, duration: '1m' },
-    { target: 100, duration: '1m' },
-    { target: 100, duration: '1m' },
-    { target: 500, duration: '2m' },
-    { target: 500, duration: '1m' },
-    { target: 1000, duration: '2m' },
-    { target: 1000, duration: '1m' },
-    { target: 5000, duration: '2m' },
-    { target: 5000, duration: '1m' },
-  ],
+  // skip_cache p95 can hit multi-seconds past 1k — need VU headroom.
+  preAllocatedVUs: 2000,
+  maxVUs: 10000,
+  ...PROFILES[PROFILE],
 };
 
 const THRESHOLDS = {
@@ -46,8 +64,36 @@ const THRESHOLDS = {
 
 const REQUEST_TIMEOUT = '30s';
 const DEFAULT_BASE = 'https://qa.harness.io';
+
+// The server reads these with url.Query().Has(name), so a param counts as ON by
+// presence alone — `refresh_cache=false` still forces a refresh. A disabled flag
+// must therefore be left out of the URL entirely.
+function envFlag(name, fallback) {
+  const v = __ENV[name];
+  if (v === undefined || v === '') return fallback;
+  return v === 'true' || v === '1';
+}
+
+// Defaults off: server treats presence as true, so omit to disable.
+const FLAGS = {
+  refresh_cache: envFlag('REFRESH_CACHE', false),
+  include_latest_version: envFlag('INCLUDE_LATEST_VERSION', false),
+  include_eol: envFlag('INCLUDE_EOL', false),
+  include_dependency_graph: envFlag('INCLUDE_DEPENDENCY_GRAPH', false),
+  include_package_score: envFlag('INCLUDE_PACKAGE_SCORE', false),
+  refresh_package_score: envFlag('REFRESH_PACKAGE_SCORE', false),
+  // Bypass Redis L1 and hit Postgres on /package_info/cached (DB stress).
+  skip_cache: envFlag('SKIP_CACHE', true),
+};
+
+const enabledFlags = Object.keys(FLAGS).filter((k) => FLAGS[k]);
 const PACKAGE_INFO_PATH =
-  '/vulnservice/api/v1/package_info?refresh_cache=false&include_latest_version=true&include_eol=true&include_dependency_graph=true&include_package_score=true&refresh_package_score=true';
+  '/vulnservice/api/v1/package_info/cached' +
+  (enabledFlags.length ? `?${enabledFlags.map((k) => `${k}=true`).join('&')}` : '');
+
+// Walk the CSV from the end so this run hits PURLs that prior forward runs
+// never warmed in Redis.
+const REVERSE_PURLS = envFlag('REVERSE_PURLS', false);
 
 // --- Dataset (loaded once, shared across VUs) ---
 const dataset = new SharedArray('purls', function () {
@@ -80,6 +126,14 @@ export const options = {
   summaryTrendStats: ['p(50)', 'p(95)', 'avg', 'min', 'max'],
 };
 
+// Echoes the resolved config once per run so a comparison run can be trusted
+// to actually differ from its baseline.
+export function setup() {
+  console.log(
+    `profile=${PROFILE} path=${PACKAGE_INFO_PATH} reverse_purls=${REVERSE_PURLS}`
+  );
+}
+
 export default function () {
   const apiKey = __ENV.HARNESS_API_KEY;
   if (!apiKey) {
@@ -87,7 +141,8 @@ export default function () {
   }
 
   const base = (__ENV.BASE_URL || DEFAULT_BASE).replace(/\/$/, '');
-  const index = exec.scenario.iterationInTest % dataset.length;
+  const i = exec.scenario.iterationInTest % dataset.length;
+  const index = REVERSE_PURLS ? dataset.length - 1 - i : i;
   const purl = dataset[index];
 
   const res = http.post(
