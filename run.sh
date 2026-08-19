@@ -2,6 +2,20 @@
 set -euo pipefail
 export HARNESS_API_KEY='pat.DUMMY_TOKEN_REPLACE_WITH_ACTUAL_PAT'
 cd "$(dirname "$0")"
+
+if [[ -n "${CONFIG:-}" ]]; then
+  conf="configs/${CONFIG}.env"
+  if [[ ! -f "$conf" ]]; then
+    echo "error: config not found: $conf" >&2
+    exit 1
+  fi
+  # shellcheck disable=SC1090
+  set -a
+  source "$conf"
+  set +a
+  echo "Loaded config: $conf (BASE_URL=${BASE_URL:-} API_PATH=${API_PATH:-} PROFILE=${PROFILE:-})"
+fi
+
 if [[ -z "${HARNESS_API_KEY:-}" ]]; then
   echo "error: set HARNESS_API_KEY before running" >&2
   exit 1

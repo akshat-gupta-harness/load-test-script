@@ -32,16 +32,72 @@ sudo sysctl -w net.inet.tcp.msl=1000
 
 ## Run
 
+### QA (default)
+
 ```bash
 export HARNESS_API_KEY='your-pat'
 ./run.sh
 ```
 
+| Setting | Default |
+|---------|---------|
+| `BASE_URL` | `https://qa.harness.io` |
+| `API_PATH` | `/component-data-service/api/v1/package_info/cached` |
+| `PROFILE` | `full` |
+| `SKIP_CACHE` | `true` |
+| `BATCH_SIZE` | `1` |
+
+Target URL: `https://qa.harness.io/component-data-service/api/v1/package_info/cached?skip_cache=true`
+
+QA + batch100 (100 PURLs/POST, same ramp as local):
+
+```bash
+PROFILE=batch100 ./run.sh
+```
+
+### Local API
+
+Start vulnservice on `:8080`, then:
+
+```bash
+export HARNESS_API_KEY='your-pat'   # required by the script; local may ignore it
+CONFIG=local ./run.sh
+```
+
+Loads `configs/local.env`:
+
+| Setting | Default |
+|---------|---------|
+| `BASE_URL` | `http://localhost:8080` |
+| `API_PATH` | `/api/v1/package_info/cached` |
+| `PROFILE` | `batch100` |
+| `SKIP_CACHE` | `true` |
+
+### Common overrides
+
+```bash
+# Ramp profile
+PROFILE=batch100 ./run.sh
+PROFILE=focus CONFIG=local ./run.sh
+
+# Cache / flags (presence = on; omit or false to disable)
+SKIP_CACHE=false CONFIG=local ./run.sh
+SKIP_CACHE=true PROFILE=batch100 ./run.sh
+
+# Batch size (batch100 already sets 100)
+BATCH_SIZE=50 CONFIG=local ./run.sh
+
+# Host / path without a config file
+BASE_URL=http://localhost:8080 API_PATH=/api/v1/package_info/cached ./run.sh
+BASE_URL=https://qa.harness.io ./run.sh
+```
+
+### Dashboards
+
 - Grafana k6: http://localhost:3000/d/k6-load-test/k6-load-test
 - Grafana GCP: http://localhost:3000/d/gcp-vulnservice/gcp-vulnservice (`vulnservice` CPU/mem, pod network rx/tx, Cloud SQL connections/CPU/mem/disk)
 - Built-in k6 UI: http://localhost:5665
 - Static report after finish: `report.html`
-- Override host: `BASE_URL=https://qa.harness.io ./run.sh`
 
 Request matches `sample-curl` (one PURL per POST, 30s timeout). Tunables (`LOAD`, `THRESHOLDS`) are at the top of `load-test.js`.
 Grafana has separate panels for p50, p95, total RPS, and RPS by exact HTTP
@@ -56,17 +112,13 @@ docker-compose down
 
 ## Ramp profiles
 
-Pick with `PROFILE=…` (default `full`):
+Pick with `PROFILE=…` (default `full`; `CONFIG=local` defaults to `batch100`):
 
 | Profile | RPS path | Batch |
 |---------|----------|-------|
 | `full` | 200 → 300 → 500 → … → 3000 | 1 (override with `BATCH_SIZE`) |
 | `focus` | 300 → 500 → 750 → 1000 | 1 |
 | `batch100` | slow 10 → 25 → 50 → … → 500 (longer holds) | **100** |
-
-```bash
-PROFILE=batch100 ./run.sh
-```
 
 `maxVUs: 10000`. Sized for ~400ms latency: concurrency ≈ RPS × 0.4 (Little’s law). If p95 climbs under load, watch `dropped_iterations` and `vus`.
 

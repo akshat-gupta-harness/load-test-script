@@ -117,8 +117,13 @@ const FLAGS = {
 };
 
 const enabledFlags = Object.keys(FLAGS).filter((k) => FLAGS[k]);
+// QA gateway: /component-data-service/api/v1/... ; local server: /api/v1/...
+const API_PATH = (__ENV.API_PATH || '/component-data-service/api/v1/package_info/cached').replace(
+  /\?.*$/,
+  ''
+);
 const PACKAGE_INFO_PATH =
-  '/vulnservice/api/v1/package_info/cached' +
+  API_PATH +
   (enabledFlags.length ? `?${enabledFlags.map((k) => `${k}=true`).join('&')}` : '');
 
 // Walk the CSV from the end so this run hits PURLs that prior forward runs
@@ -159,8 +164,9 @@ export const options = {
 // Echoes the resolved config once per run so a comparison run can be trusted
 // to actually differ from its baseline.
 export function setup() {
+  const base = (__ENV.BASE_URL || DEFAULT_BASE).replace(/\/$/, '');
   console.log(
-    `profile=${PROFILE} batch_size=${BATCH_SIZE} path=${PACKAGE_INFO_PATH} reverse_purls=${REVERSE_PURLS}`
+    `base=${base} profile=${PROFILE} batch_size=${BATCH_SIZE} path=${PACKAGE_INFO_PATH} reverse_purls=${REVERSE_PURLS}`
   );
 }
 
