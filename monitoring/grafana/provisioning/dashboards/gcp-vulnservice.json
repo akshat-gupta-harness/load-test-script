@@ -4,8 +4,532 @@
   },
   "editable": false,
   "graphTooltip": 1,
-  "description": "GKE and Cloud SQL metrics for vulnservice, pulled from Cloud Monitoring by stackdriver-exporter and stored in Prometheus.",
+  "description": "Cloud SQL vulnerability-qa first, then GKE component-data-service and vulnservice. Pulled from Cloud Monitoring by stackdriver-exporter into Prometheus.",
   "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 202,
+      "panels": [],
+      "title": "Cloud SQL vulnerability-qa",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Open backends (connections) per database on vulnerability-qa.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "connections"
+          },
+          "min": 0,
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (database) (stackdriver_cloudsql_database_cloudsql_googleapis_com_database_postgresql_num_backends{database_id=\"qa-setup:vulnerability-qa\"})",
+          "legendFormat": "{{database}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Backends grouped by state (active/idle/\u2026). Useful when pool looks full but work is idle.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "connections"
+          },
+          "min": 0,
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 11,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (state) (stackdriver_cloudsql_database_cloudsql_googleapis_com_database_postgresql_num_backends_by_state{database_id=\"qa-setup:vulnerability-qa\"})",
+          "legendFormat": "{{state}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 connections by state",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "utilization"
+          },
+          "min": 0,
+          "unit": "percentunit",
+          "max": 1
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 9
+      },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_cpu_utilization{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "CPU",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 CPU utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "utilization"
+          },
+          "min": 0,
+          "unit": "percentunit",
+          "max": 1
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 9
+      },
+      "id": 4,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_memory_utilization{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "memory",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 memory utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "utilization"
+          },
+          "min": 0,
+          "unit": "percentunit",
+          "max": 1
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "id": 6,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_disk_utilization{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "disk",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 disk utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Cloud Monitoring delta counts (typically per ~60s align). Spikes track IO-heavy query phases.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "ops / sample"
+          },
+          "min": 0,
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "id": 15,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_disk_read_ops_count{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "read ops",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_disk_write_ops_count{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "write ops",
+          "refId": "B"
+        }
+      ],
+      "title": "Cloud SQL \u2014 disk I/O ops",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Cloud Monitoring delta byte counts for data disk IO.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "bytes / sample"
+          },
+          "min": 0,
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 16,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_disk_read_bytes_count{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "read bytes",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_disk_write_bytes_count{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "write bytes",
+          "refId": "B"
+        }
+      ],
+      "title": "Cloud SQL \u2014 disk I/O bytes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Instance network ingress/egress delta bytes.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "bytes / sample"
+          },
+          "min": 0,
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "id": 17,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_network_received_bytes_count{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "rx",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_network_sent_bytes_count{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "tx",
+          "refId": "B"
+        }
+      ],
+      "title": "Cloud SQL \u2014 network",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Machine size signal (e.g. 6 for db-custom-6-*).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "cores"
+          },
+          "min": 0,
+          "unit": "none"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "id": 18,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_cpu_reserved_cores{database_id=\"qa-setup:vulnerability-qa\"}",
+          "legendFormat": "reserved cores",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 reserved CPU cores",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "PostgreSQL new connection delta count.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "count / sample"
+          },
+          "min": 0,
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 33
+      },
+      "id": 19,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(stackdriver_cloudsql_database_cloudsql_googleapis_com_database_postgresql_new_connection_count{database_id=\"qa-setup:vulnerability-qa\"})",
+          "legendFormat": "new connections",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 new connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Transaction delta count by type.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "count / sample"
+          },
+          "min": 0,
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 33
+      },
+      "id": 20,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (transaction_type) (stackdriver_cloudsql_database_cloudsql_googleapis_com_database_postgresql_transaction_count{database_id=\"qa-setup:vulnerability-qa\"})",
+          "legendFormat": "{{transaction_type}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 transactions",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Deadlock delta count.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "count / sample"
+          },
+          "min": 0,
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 33
+      },
+      "id": 21,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(stackdriver_cloudsql_database_cloudsql_googleapis_com_database_postgresql_deadlock_count{database_id=\"qa-setup:vulnerability-qa\"})",
+          "legendFormat": "deadlocks",
+          "refId": "A"
+        }
+      ],
+      "title": "Cloud SQL \u2014 deadlocks",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 200,
+      "panels": [],
+      "title": "component-data-service",
+      "type": "row"
+    },
     {
       "datasource": {
         "type": "prometheus",
@@ -28,7 +552,273 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 0
+        "y": 42
+      },
+      "id": 100,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "stackdriver_k_8_s_container_kubernetes_io_container_cpu_request_utilization{namespace_name=\"harness-helm-new\", container_name=\"component-data-service\"}",
+          "legendFormat": "{{pod_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "component-data-service \u2014 CPU request utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Absolute CPU consumption in cores, summed across all component-data-service pods, shown against the total requested and total limit cores.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "cores"
+          },
+          "decimals": 2,
+          "min": 0,
+          "unit": "none"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 42
+      },
+      "id": 101,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(stackdriver_k_8_s_container_kubernetes_io_container_cpu_core_usage_time{namespace_name=\"harness-helm-new\", container_name=\"component-data-service\"}[5m]))",
+          "legendFormat": "cores used (5m rate)",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(stackdriver_k_8_s_container_kubernetes_io_container_cpu_request_cores{namespace_name=\"harness-helm-new\", container_name=\"component-data-service\"})",
+          "legendFormat": "cores requested",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(stackdriver_k_8_s_container_kubernetes_io_container_cpu_limit_cores{namespace_name=\"harness-helm-new\", container_name=\"component-data-service\"})",
+          "legendFormat": "cores limit",
+          "refId": "C"
+        }
+      ],
+      "title": "component-data-service \u2014 CPU cores used",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Container memory in use, summed over evictable and non-evictable memory across all component-data-service pods.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "bytes"
+          },
+          "min": 0,
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 42
+      },
+      "id": 102,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(stackdriver_k_8_s_container_kubernetes_io_container_memory_used_bytes{namespace_name=\"harness-helm-new\", container_name=\"component-data-service\"})",
+          "legendFormat": "memory used",
+          "refId": "A"
+        }
+      ],
+      "title": "component-data-service \u2014 memory used",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Memory used as a fraction of the container's memory request, summed over evictable and non-evictable memory.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "fraction of request"
+          },
+          "min": 0,
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 50
+      },
+      "id": 103,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (pod_name) (stackdriver_k_8_s_container_kubernetes_io_container_memory_request_utilization{namespace_name=\"harness-helm-new\", container_name=\"component-data-service\"})",
+          "legendFormat": "{{pod_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "component-data-service \u2014 memory request utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Inbound network throughput for component-data-service pods (GKE pod network received bytes).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "B/s"
+          },
+          "min": 0,
+          "unit": "Bps"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 50
+      },
+      "id": 104,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (pod_name) (rate(stackdriver_k_8_s_pod_kubernetes_io_pod_network_received_bytes_count{namespace_name=\"harness-helm-new\", pod_name=~\"component-data-service.*\"}[5m]))",
+          "legendFormat": "{{pod_name}} rx",
+          "refId": "A"
+        }
+      ],
+      "title": "component-data-service \u2014 network receive",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Outbound network throughput for component-data-service pods (GKE pod network sent bytes).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "B/s"
+          },
+          "min": 0,
+          "unit": "Bps"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 50
+      },
+      "id": 105,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (pod_name) (rate(stackdriver_k_8_s_pod_kubernetes_io_pod_network_sent_bytes_count{namespace_name=\"harness-helm-new\", pod_name=~\"component-data-service.*\"}[5m]))",
+          "legendFormat": "{{pod_name}} tx",
+          "refId": "A"
+        }
+      ],
+      "title": "component-data-service \u2014 network send",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 58
+      },
+      "id": 201,
+      "panels": [],
+      "title": "vulnservice",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "CPU used as a fraction of the container's CPU request. 1.0 means the pod is using exactly what it asked for.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "fraction of request"
+          },
+          "min": 0,
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 59
       },
       "id": 1,
       "targets": [
@@ -42,7 +832,7 @@
           "refId": "A"
         }
       ],
-      "title": "vulnservice — CPU request utilization",
+      "title": "vulnservice \u2014 CPU request utilization",
       "type": "timeseries"
     },
     {
@@ -68,7 +858,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 0
+        "y": 59
       },
       "id": 8,
       "targets": [
@@ -100,7 +890,7 @@
           "refId": "C"
         }
       ],
-      "title": "vulnservice — CPU cores used",
+      "title": "vulnservice \u2014 CPU cores used",
       "type": "timeseries"
     },
     {
@@ -125,7 +915,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 0
+        "y": 59
       },
       "id": 2,
       "targets": [
@@ -139,7 +929,7 @@
           "refId": "A"
         }
       ],
-      "title": "vulnservice — memory used",
+      "title": "vulnservice \u2014 memory used",
       "type": "timeseries"
     },
     {
@@ -164,7 +954,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 8
+        "y": 67
       },
       "id": 7,
       "targets": [
@@ -178,7 +968,7 @@
           "refId": "A"
         }
       ],
-      "title": "vulnservice — memory request utilization",
+      "title": "vulnservice \u2014 memory request utilization",
       "type": "timeseries"
     },
     {
@@ -203,7 +993,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 8
+        "y": 67
       },
       "id": 9,
       "targets": [
@@ -217,7 +1007,7 @@
           "refId": "A"
         }
       ],
-      "title": "vulnservice — network receive",
+      "title": "vulnservice \u2014 network receive",
       "type": "timeseries"
     },
     {
@@ -242,7 +1032,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 8
+        "y": 67
       },
       "id": 10,
       "targets": [
@@ -256,163 +1046,7 @@
           "refId": "A"
         }
       ],
-      "title": "vulnservice — network send",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "Open backends (connections) per database on the vulnerability-qa instance.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "connections"
-          },
-          "min": 0,
-          "unit": "short"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      },
-      "id": 5,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (database) (stackdriver_cloudsql_database_cloudsql_googleapis_com_database_postgresql_num_backends{database_id=\"qa-setup:vulnerability-qa\"})",
-          "legendFormat": "{{database}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Cloud SQL vulnerability-qa — connections",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "utilization"
-          },
-          "max": 1,
-          "min": 0,
-          "unit": "percentunit"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 24
-      },
-      "id": 3,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_cpu_utilization{database_id=\"qa-setup:vulnerability-qa\"}",
-          "legendFormat": "CPU",
-          "refId": "A"
-        }
-      ],
-      "title": "Cloud SQL vulnerability-qa — CPU",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "utilization"
-          },
-          "max": 1,
-          "min": 0,
-          "unit": "percentunit"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 24
-      },
-      "id": 4,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_memory_utilization{database_id=\"qa-setup:vulnerability-qa\"}",
-          "legendFormat": "memory",
-          "refId": "A"
-        }
-      ],
-      "title": "Cloud SQL vulnerability-qa — memory",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "utilization"
-          },
-          "max": 1,
-          "min": 0,
-          "unit": "percentunit"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 24
-      },
-      "id": 6,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "stackdriver_cloudsql_database_cloudsql_googleapis_com_database_disk_utilization{database_id=\"qa-setup:vulnerability-qa\"}",
-          "legendFormat": "disk",
-          "refId": "A"
-        }
-      ],
-      "title": "Cloud SQL vulnerability-qa — disk utilization",
+      "title": "vulnservice \u2014 network send",
       "type": "timeseries"
     }
   ],
@@ -421,6 +1055,8 @@
   "tags": [
     "gcp",
     "load-test",
+    "cloud-sql",
+    "component-data-service",
     "vulnservice"
   ],
   "time": {
@@ -428,7 +1064,7 @@
     "to": "now"
   },
   "timezone": "browser",
-  "title": "GCP vulnservice + Cloud SQL",
+  "title": "GCP Cloud SQL / component-data-service / vulnservice",
   "uid": "gcp-vulnservice",
-  "version": 3
+  "version": 6
 }

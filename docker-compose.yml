@@ -27,14 +27,22 @@ services:
       - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/cpu
       - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/memory
       - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/disk
+      - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/network
       - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/postgresql/num_backends
-      - --monitoring.filters=kubernetes.io/container/cpu:resource.labels.cluster_name="qa-private" AND resource.labels.namespace_name="harness-helm-new" AND resource.labels.container_name="vulnservice"
-      - --monitoring.filters=kubernetes.io/container/memory:resource.labels.cluster_name="qa-private" AND resource.labels.namespace_name="harness-helm-new" AND resource.labels.container_name="vulnservice"
-      - --monitoring.filters=kubernetes.io/pod/network:resource.labels.cluster_name="qa-private" AND resource.labels.namespace_name="harness-helm-new" AND resource.labels.pod_name=starts_with("vulnservice")
+      - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/postgresql/new_connection_count
+      - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/postgresql/transaction_count
+      - --monitoring.metrics-prefixes=cloudsql.googleapis.com/database/postgresql/deadlock_count
+      - --monitoring.filters=kubernetes.io/container/cpu:resource.labels.cluster_name="qa-private" AND resource.labels.namespace_name="harness-helm-new"
+      - --monitoring.filters=kubernetes.io/container/memory:resource.labels.cluster_name="qa-private" AND resource.labels.namespace_name="harness-helm-new"
+      - --monitoring.filters=kubernetes.io/pod/network:resource.labels.cluster_name="qa-private" AND resource.labels.namespace_name="harness-helm-new"
       - --monitoring.filters=cloudsql.googleapis.com/database/cpu:resource.labels.database_id="qa-setup:vulnerability-qa"
       - --monitoring.filters=cloudsql.googleapis.com/database/memory:resource.labels.database_id="qa-setup:vulnerability-qa"
       - --monitoring.filters=cloudsql.googleapis.com/database/disk:resource.labels.database_id="qa-setup:vulnerability-qa"
+      - --monitoring.filters=cloudsql.googleapis.com/database/network:resource.labels.database_id="qa-setup:vulnerability-qa"
       - --monitoring.filters=cloudsql.googleapis.com/database/postgresql/num_backends:resource.labels.database_id="qa-setup:vulnerability-qa"
+      - --monitoring.filters=cloudsql.googleapis.com/database/postgresql/new_connection_count:resource.labels.database_id="qa-setup:vulnerability-qa"
+      - --monitoring.filters=cloudsql.googleapis.com/database/postgresql/transaction_count:resource.labels.database_id="qa-setup:vulnerability-qa"
+      - --monitoring.filters=cloudsql.googleapis.com/database/postgresql/deadlock_count:resource.labels.database_id="qa-setup:vulnerability-qa"
       - --monitoring.metrics-ingest-delay
       - --collector.fill-missing-labels
       - --stackdriver.http-timeout=30s

@@ -10,7 +10,7 @@ brew install k6 docker docker-compose colima
 
 `./run.sh` starts Colima if needed, then brings up local Prometheus + Grafana.
 
-For GCP panels (GKE `vulnservice` + Cloud SQL `vulnerability-qa` in `qa-setup`):
+For GCP panels (GKE `component-data-service` + `vulnservice` + Cloud SQL `vulnerability-qa` in `qa-setup`):
 
 ```bash
 brew install --cask google-cloud-sdk   # if needed
@@ -95,7 +95,7 @@ BASE_URL=https://qa.harness.io ./run.sh
 ### Dashboards
 
 - Grafana k6: http://localhost:3000/d/k6-load-test/k6-load-test
-- Grafana GCP: http://localhost:3000/d/gcp-vulnservice/gcp-vulnservice (`vulnservice` CPU/mem, pod network rx/tx, Cloud SQL connections/CPU/mem/disk)
+- Grafana GCP: http://localhost:3000/d/gcp-vulnservice/gcp-vulnservice (Cloud SQL first, then `component-data-service` + `vulnservice`)
 - Built-in k6 UI: http://localhost:5665
 - Static report after finish: `report.html`
 

@@ -156,7 +156,7 @@ Always state:
 
 **Folder:** `docs/load-test-runs/<run-id>/`
 
-Use `YYYY-MM-DD-package-info-cached[-variant]` for `<run-id>`. Put the report at `analysis.md`; never overwrite another run.
+Use `YYYY-MM-DD-N-<kebab-brief>` for `<run-id>` (date, day’s iteration, change/config). Do not include `package-info`. Put the report at `analysis.md`; never overwrite another run. H1 is `# YYYY-MM-DD — N — <brief>`.
 
 ```text
 docs/load-test-runs/<run-id>/
