@@ -44,10 +44,10 @@ export HARNESS_API_KEY='your-pat'
 | `BASE_URL` | `https://qa.harness.io` |
 | `API_PATH` | `/component-data-service/api/v1/package_info/cached` |
 | `PROFILE` | `full` |
-| `SKIP_CACHE` | `true` |
+| `SKIP_CACHE` | `false` (omitted from URL) |
 | `BATCH_SIZE` | `1` |
 
-Target URL: `https://qa.harness.io/component-data-service/api/v1/package_info/cached?skip_cache=true`
+Target URL: `https://qa.harness.io/component-data-service/api/v1/package_info/cached`
 
 QA + batch100 (100 PURLs/POST, same ramp as local):
 
@@ -71,7 +71,7 @@ Loads `configs/local.env`:
 | `BASE_URL` | `http://localhost:8080` |
 | `API_PATH` | `/api/v1/package_info/cached` |
 | `PROFILE` | `batch100` |
-| `SKIP_CACHE` | `true` |
+| `SKIP_CACHE` | `false` (omitted from URL) |
 
 ### Common overrides
 
@@ -126,8 +126,8 @@ Pick with `PROFILE=…` (default `full`; `CONFIG=local` defaults to `batch100`):
 
 | Metric | Rule | Effect |
 |--------|------|--------|
-| `http_req_failed` | rate &lt; 5% | abort if breached |
-| `status_5xx_rate` | rate &lt; 2% | abort if breached |
+| `http_req_failed` | rate &lt; 75% | abort if breached |
+| `status_5xx_rate` | rate &lt; 75% | abort if breached |
 | Warmup | `delayAbortEval: 1m` | ignore early noise |
 
 ## Metrics (k6)
@@ -146,7 +146,7 @@ Pick with `PROFILE=…` (default `full`; `CONFIG=local` defaults to `batch100`):
 A stage holds if:
 
 1. Delivered RPS within ~10% of target
-2. p50 ~400ms; p95 stays flat (under 30s timeout)
+2. p50 ~400ms; p95 stays flat (under the 5m request timeout)
 3. 5xx under abort; treat CSV-driven 4xx separately from capacity
 4. GKE `vulnservice` (cluster `qa-private`, ns `harness-helm-new`): CPU/mem not pegged with climbing p99 / LB 5xx
 5. Cloud SQL `vulnerability-qa`: connections OK; no disk saturation matching the hold

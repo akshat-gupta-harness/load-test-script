@@ -66,7 +66,7 @@ done
 ulimit -n 65535 2>/dev/null || true
 
 echo "Grafana k6:  http://localhost:3000/d/k6-load-test/k6-load-test"
-echo "Grafana GCP: http://localhost:3000/d/gcp-vulnservice/gcp-vulnservice"
+echo "Grafana GCP: http://localhost:3000/d/gcp-vulnservice (component-data-service + vulnservice + Cloud SQL)"
 echo "k6 UI:       http://localhost:5665"
 echo "Report:      $(pwd)/report.html"
 echo
